@@ -91,15 +91,14 @@ void print(int sudoku[SIZE][SIZE]) {
 }
 
 int main() {
-    printf("Initial Sudoku:\n");
+    printf("Sudoku:\n");
     print(sudoku);
 
-    printf("Solving Sudoku...\n");
     if (solveSudoku()) {
-        printf("Sudoku Solved:\n");
+        printf("Solved:\n");
         print(sudoku);
     } else {
-        printf("Unable to solve Sudoku.\n");
+        printf("error\n");
     }
 
     return 0;
