@@ -181,7 +181,7 @@ int main() {
             printf("Solved: \n");
             solveSudoku(sudoku);
             print(sudoku);
-            writeSudokuToFile("ivan.ss", sudoku);
+            writeSudokuToFile("martin.ss", sudoku);
         } else {
             printf("Failed to read from the file: %s\n", filenames[i]);
         }
