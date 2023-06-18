@@ -85,10 +85,9 @@ void print(int sudoku[SIZE][SIZE]) {
             printf("%d ", sudoku[row][column]);
         }
         printf("\n");
-        if ((row + 1) % 3 == 0 && row != SIZE - 1)
+        if ((row + 1) % 3 == 0)
             printf("---------------------\n");
     }
-    printf("---------------------\n");
 }
 
 bool readSudokuFromFile( char* filePath, int grid[SIZE][SIZE]) {
@@ -101,13 +100,13 @@ bool readSudokuFromFile( char* filePath, int grid[SIZE][SIZE]) {
 
     int row = 0;
     while (fgets(line, sizeof(line), file) != NULL) {
-        if (line[0] == '*' || line[0] == '-' || line[0] == '+')
+        if (line[1] == '*' || line[0] == '-' || line[0] == '+')
             continue;
         int col = 0;
         int charIndex = 0;
         while (col < SIZE) {
             char ch = line[charIndex];
-            if (ch == '|' || ch == '+') {
+            if (ch == '|' || ch == '+'|| ch == ' ') {
                 charIndex++;
                 continue;
             }
