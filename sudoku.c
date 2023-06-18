@@ -1,22 +1,23 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
 
 #define SIZE 9
+#define MAX_NAMES 50
+#define MAX_LENGTH 50
 
 int sudoku[SIZE][SIZE] = {
-    {5, 3, 0, 0, 7, 0, 0, 0, 0},
-    {6, 0, 0, 1, 9, 5, 0, 0, 0},
-    {0, 9, 8, 0, 0, 0, 0, 6, 0},
-    {8, 0, 0, 0, 6, 0, 0, 0, 3},
-    {4, 0, 0, 8, 0, 3, 0, 0, 1},
-    {7, 0, 0, 0, 2, 0, 0, 0, 6},
-    {0, 6, 0, 0, 0, 0, 2, 8, 0},
-    {0, 0, 0, 4, 1, 9, 0, 0, 5},
-    {0, 0, 0, 0, 8, 0, 0, 7, 9}
+    {8, 5, 0, 0, 0, 2, 4, 0, 0},
+    {7, 2, 0, 0, 0, 0, 0, 0, 9},
+    {0, 0, 4, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 1, 0, 7, 0, 0, 2},
+    {3, 0, 5, 0, 0, 0, 9, 0, 0},
+    {0, 4, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 8, 0, 0, 7, 0},
+    {0, 1, 7, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 3, 6, 0, 4, 0}
 };
 
-bool isRowPossible(int num, int row) {
+bool isRowPossible(int sudoku[SIZE][SIZE], int num, int row) {
     for (int i = 0; i < SIZE; i++) {
         if (num == sudoku[row][i])
             return false;
@@ -24,7 +25,7 @@ bool isRowPossible(int num, int row) {
     return true;
 }
 
-bool isColumnPossible(int num, int column) {
+bool isColumnPossible(int sudoku[SIZE][SIZE], int num, int column) {
     for (int i = 0; i < SIZE; i++) {
         if (num == sudoku[i][column])
             return false;
@@ -32,39 +33,39 @@ bool isColumnPossible(int num, int column) {
     return true;
 }
 
-bool isBoxPossible(int num, int startRow, int startCol) {
-    int endRow = startRow + 2;
-    int endCol = startCol + 2;
+bool isBoxPossible(int sudoku[SIZE][SIZE], int num, int column, int row) {
+    int r, c;
+    r = row - row % 3;
+    c = column - column % 3;
 
-    for (int row = startRow; row <= endRow; row++) {
-        for (int col = startCol; col <= endCol; col++) {
-            if (sudoku[row][col] == num)
+    for (int i = r; i < r + 3; i++) {
+        for (int j = c; j < c + 3; j++) {
+            if (sudoku[i][j] == num)
                 return false;
         }
     }
     return true;
 }
 
-bool isPositionPossible(int num, int row, int col) {
-    int startRow = row - (row % 3);
-    int startCol = col - (col % 3);
-
-    return isRowPossible(num, row) &&
-           isColumnPossible(num, col) &&
-           isBoxPossible(num, startRow, startCol);
+bool isPositionPossible(int sudoku[SIZE][SIZE], int num, int column, int row) {
+    return  isColumnPossible(sudoku, num, column) &&
+            isRowPossible(sudoku, num, row) &&
+            isBoxPossible(sudoku, num, column, row);
 }
 
-bool solveSudoku() {
+bool solveSudoku(int sudoku[SIZE][SIZE])
+{
     for (int row = 0; row < SIZE; row++) {
-        for (int col = 0; col < SIZE; col++) {
-            if (sudoku[row][col] == 0) {
+        for (int column = 0; column < SIZE; column++)
+            {
+            if (sudoku[row][column] == 0) {
                 for (int num = 1; num <= SIZE; num++) {
-                    if (isPositionPossible(num, row, col)) {
-                        sudoku[row][col] = num;
-                        if (solveSudoku()) {
+                    if (isPositionPossible(sudoku, num, column, row)) {
+                        sudoku[row][column] = num;
+                        if (solveSudoku(sudoku)) {
                             return true;
                         } else {
-                            sudoku[row][col] = 0;
+                            sudoku[row][column] = 0;
                         }
                     }
                 }
@@ -90,15 +91,101 @@ void print(int sudoku[SIZE][SIZE]) {
     printf("---------------------\n");
 }
 
-int main() {
-    printf("Sudoku:\n");
-    print(sudoku);
+bool readSudokuFromFile( char* filePath, int grid[SIZE][SIZE]) {
+    FILE* file = fopen(filePath, "r");
+    if (file == NULL) {
+        printf("Error opening the file: %s\n", filePath);
+        return false;
+    }
+    char line[20];
 
-    if (solveSudoku()) {
-        printf("Solved:\n");
-        print(sudoku);
-    } else {
-        printf("error\n");
+    int row = 0;
+    while (fgets(line, sizeof(line), file) != NULL) {
+        if (line[0] == '*' || line[0] == '-' || line[0] == '+')
+            continue;
+        int col = 0;
+        int charIndex = 0;
+        while (col < SIZE) {
+            char ch = line[charIndex];
+            if (ch == '|' || ch == '+') {
+                charIndex++;
+                continue;
+            }
+            if (ch == '.') {
+                grid[row][col] = 0;
+                col++;
+                charIndex++;
+                continue;
+            }
+            if (ch == '-') {
+                col = SIZE;
+                break;
+            }
+            if (isdigit(ch)) {
+                grid[row][col] = ch - '0';
+                col++;
+                charIndex++;
+            }
+        }
+        if (col != SIZE) {
+            printf("Invalid col length. \n");
+            fclose(file);
+            return false;
+        }
+        row++;
+        if (row == SIZE)
+            break;
+    }
+    fclose(file);
+    return true;
+}
+
+void writeSudokuToFile(const char* filePath, const int grid[SIZE][SIZE]) {
+    FILE* file = fopen(filePath, "a");
+    if (file == NULL) {
+        printf("Error opening the file: %s\n", filePath);
+        exit(1);
+    }
+
+    fprintf(file, " *-----------*\n");
+    for (int row = 0; row < SIZE; row++) {
+        fprintf(file, " |");
+        for (int col = 0; col < SIZE; col++) {
+            if (grid[row][col] != 0)
+                fprintf(file, "%d", grid[row][col]);
+            else
+                fprintf(file, ".");
+
+            if ((col + 1) % 3 == 0 && col != SIZE - 1)
+                fprintf(file, "|");
+        }
+        fprintf(file, "|\n");
+
+        if ((row + 1) % 3 == 0 && row != SIZE - 1)
+            fprintf(file, " |---+---+---|\n");
+    }
+    fprintf(file, " *-----------*\n");
+    fprintf(file, "\n");
+
+    fclose(file);
+}
+int main() {
+    char filenames[MAX_NAMES][MAX_LENGTH];
+    for (int i = 0; i < MAX_NAMES; i++) {
+        printf("Filename %d: ", i + 1);
+        scanf("%s", filenames[i]);
+
+        printf("Unsolved: \n");
+        if (readSudokuFromFile(filenames[i], sudoku)) {
+            print(sudoku);
+            printf("Solved: \n");
+            solveSudoku(sudoku);
+            print(sudoku);
+            writeSudokuToFile("ivan.ss", sudoku);
+        } else {
+            printf("Failed to read from the file: %s\n", filenames[i]);
+        }
+        printf("\nNEXT: \n");
     }
 
     return 0;
